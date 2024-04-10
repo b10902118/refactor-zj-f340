@@ -1,17 +1,9 @@
 #include <iostream>
-#include <cstring>
+#include <string>
 using namespace std;
 
-void printLine(int X, int loc = -1, char brick[] = (char *)"") {
-    if (brick) {
-        for (int i = 1; i < loc; ++i) cout << 0;
-        cout << brick;
-        for (int i = loc + strlen(brick); i <= X; ++i) cout << 0;
-    }
-    else {
-        for (int i = 1; i <= X; ++i) cout << 0;
-    }
-    cout << endl;
+void printLine(int X, string brick = "", int loc = 1) {
+    cout << string("0", loc - 1) + brick + string("0", X - (loc - 1) - brick.length()) + '\n';
 }
 
 void blankLines(int n, int X) {
@@ -63,26 +55,26 @@ int main() {
     if (d != 0) {
         blankLines(Y - (y + 1), X);
 
-        printLine(X, x, (char *)"1");
+        printLine(X, "1", x);
     }
     else {
         blankLines(Y - y, X);
     }
 
     if (d == 0 || d == 2) {
-        printLine(X, x - 1, (char *)"111");
+        printLine(X, "111", x - 1);
     }
     else {
         if (d == 1) {
-            printLine(X, x - 1, (char *)"11");
+            printLine(X, "11", x - 1);
         }
         else {
-            printLine(X, x, (char *)"11");
+            printLine(X, "11", x);
         }
     }
 
     if (d != 2) {
-        printLine(X, x, (char *)"1");
+        printLine(X, "1", x);
         blankLines(y - 2, X);
     }
     else {
