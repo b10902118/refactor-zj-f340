@@ -6,6 +6,14 @@ enum Command { MoveRight = 1, MoveLeft = 2, FallGround = 3, RotateRight = 4 };
 enum Direction { Down, Left, Up, Right };
 const int DirN = 4;
 
+struct Tetris {
+    const int X, Y;
+    Direction dir;
+    int x, y;
+
+    Tetris(int X, int Y) : X(X), Y(Y), dir(Down), x(X / 2 + X % 1), y(Y) {}
+};
+
 void printLine(int X, string brick = "", int loc = 1) {
     cout << string("0", loc - 1) + brick + string("0", X - (loc - 1) - brick.length()) + '\n';
 }
@@ -14,17 +22,23 @@ void blankLines(int n, int X) {
     for (int i = 0; i < n; ++i) printLine(X);
 }
 
-bool rightClean(int X, int x, int d) {
-    xright = d == Left ? x : x + 1;
-    return xright < X;
+void right(Tetris &t) {
+    int xright = t.dir == Left ? t.x : t.x + 1;
+    if (xright < t.X) ++t.x;
 }
-bool leftClean(int X, int x, int d) {
-    xleft = d == Right ? x : x - 1;
-    return xleft > 1;
+void left(Tetris &t) {
+    int xleft = t.dir == Right ? t.x : t.x - 1;
+    if (xleft < t.X) --t.x;
 }
-bool rotateClean(int X, int x, int y, int d) { return !(x == 1 || x == X || y == 1) }
-bool touchGround(int X, int x, int y, int d) { return (d != Up && y == 2) || y == 1; }
-int toGround(int d) { return d == Up ? 1 : 2; }
+
+bool stuckBoundry(const Tetris &t) { return t.x == 1 || t.x == t.X || t.y == 1; }
+
+void rotate(Tetris &t) {
+    if (!stuckBoundry(t)) t.dir = static_cast<Direction>((t.dir + 1) % 4);
+}
+void ground(Tetris &t) { t.y = t.dir == Up ? 1 : 2; }
+
+bool onGround(Tetris &t) { return t.y == 1 || (t.y == 2 && t.dir != Up); }
 
 int main() {
     int X, Y;
@@ -32,61 +46,57 @@ int main() {
     int n;
     cin >> n;
 
-    int x = X / 2 + X % 2, y = Y, d = 0;
-    bool grounded = false;
+    Tetris t(X, Y);
 
-    for (int i = 0; i < n && !grounded; ++i) {
+    for (int i = 0; i < n && !onGround(t); ++i) {
         int op;
         cin >> op;
 
-        --y;
+        --t.y;
 
         switch (op) {
         case MoveRight:
-            if (rightClean(X, x, d)) ++x;
+            right(t);
             break;
         case MoveLeft:
-            if (leftClean(X, x, d)) --x;
+            left(t);
             break;
         case FallGround:
-            y = toGround(d);
-            grounded = true;
+            ground(t);
+            break;
         case RotateRight:
-            if (rotateClean(X, x, y, d)) {
-                d = (d + 1) % DirN;
-            }
+            rotate(t);
             break;
         }
-        if (touchGround(X, x, y, d)) break;
     }
 
-    if (d != Down) {
-        blankLines(Y - (y + 1), X);
+    if (t.dir != Down) {
+        blankLines(Y - (t.y + 1), X);
 
-        printLine(X, "1", x);
+        printLine(X, "1", t.x);
     }
     else {
-        blankLines(Y - y, X);
+        blankLines(Y - t.y, X);
     }
 
-    if (d == Down || d == Up) {
-        printLine(X, "111", x - 1);
+    if (t.dir == Down || t.dir == Up) {
+        printLine(X, "111", t.x - 1);
     }
     else {
-        if (d == Left) {
-            printLine(X, "11", x - 1);
+        if (t.dir == Left) {
+            printLine(X, "11", t.x - 1);
         }
         else {
-            printLine(X, "11", x);
+            printLine(X, "11", t.x);
         }
     }
 
-    if (d != Up) {
-        printLine(X, "1", x);
-        blankLines(y - 2, X);
+    if (t.dir != Up) {
+        printLine(X, "1", t.x);
+        blankLines(t.y - 2, X);
     }
     else {
-        blankLines(y - 1, X);
+        blankLines(t.y - 1, X);
     }
 
     return 0;
