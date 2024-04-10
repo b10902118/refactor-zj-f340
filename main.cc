@@ -2,6 +2,10 @@
 #include <string>
 using namespace std;
 
+enum Command { MoveRight = 1, MoveLeft = 2, FallGround = 3, RotateRight = 4 };
+enum Direction { Down, Left, Up, Right };
+const int DirN = 4;
+
 void printLine(int X, string brick = "", int loc = 1) {
     cout << string("0", loc - 1) + brick + string("0", X - (loc - 1) - brick.length()) + '\n';
 }
@@ -10,13 +14,17 @@ void blankLines(int n, int X) {
     for (int i = 0; i < n; ++i) printLine(X);
 }
 
-bool rightClean(int X, int x, int d) { return (d != 1 && x < X - 1) || (d == 1 && x < X); }
-bool leftClean(int X, int x, int d) { return (d != 3 && x > 2) || (d == 3 && x > 1); }
-bool rotateClean(int X, int x, int y, int d) {
-    return !(d == 1 && x == X) && !(d == 3 && x == 1) && !(d == 2 && y == 1);
+bool rightClean(int X, int x, int d) {
+    xright = d == Left ? x : x + 1;
+    return xright < X;
 }
-bool touchGround(int X, int x, int y, int d) { return (d != 2 && y == 2) || (d == 2 && y == 1); }
-int toGround(int d) { return d == 2 ? 1 : 2; }
+bool leftClean(int X, int x, int d) {
+    xleft = d == Right ? x : x - 1;
+    return xleft > 1;
+}
+bool rotateClean(int X, int x, int y, int d) { return !(x == 1 || x == X || y == 1) }
+bool touchGround(int X, int x, int y, int d) { return (d != Up && y == 2) || y == 1; }
+int toGround(int d) { return d == Up ? 1 : 2; }
 
 int main() {
     int X, Y;
@@ -34,25 +42,25 @@ int main() {
         --y;
 
         switch (op) {
-        case 1:
+        case MoveRight:
             if (rightClean(X, x, d)) ++x;
             break;
-        case 2:
+        case MoveLeft:
             if (leftClean(X, x, d)) --x;
             break;
-        case 3:
+        case FallGround:
             y = toGround(d);
             grounded = true;
-        case 4:
+        case RotateRight:
             if (rotateClean(X, x, y, d)) {
-                d = (d + 1) % 4;
+                d = (d + 1) % DirN;
             }
             break;
         }
         if (touchGround(X, x, y, d)) break;
     }
 
-    if (d != 0) {
+    if (d != Down) {
         blankLines(Y - (y + 1), X);
 
         printLine(X, "1", x);
@@ -61,11 +69,11 @@ int main() {
         blankLines(Y - y, X);
     }
 
-    if (d == 0 || d == 2) {
+    if (d == Down || d == Up) {
         printLine(X, "111", x - 1);
     }
     else {
-        if (d == 1) {
+        if (d == Left) {
             printLine(X, "11", x - 1);
         }
         else {
@@ -73,7 +81,7 @@ int main() {
         }
     }
 
-    if (d != 2) {
+    if (d != Up) {
         printLine(X, "1", x);
         blankLines(y - 2, X);
     }
