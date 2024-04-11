@@ -12,7 +12,7 @@ struct Pos {
     int x, y;
 };
 
-struct Tetris {
+class Tetris {
     // constructor is constexpr
     // error: ‘constexpr’ needed for in-class initialization of static data member ‘const Pos
     // Tetris::flatsides [4]’ of non-integral type [-fpermissive]
@@ -22,41 +22,45 @@ struct Tetris {
     Direction flatDir;
     int x, y;
 
+    bool stuckBoundry() { return x == 1 || x == X || y == 1; }
+    int y2r(int shift = 0) { return Y - (y + shift); }
+    int x2c(int shift = 0) { return x + shift - 1; }
+
+  public:
     Tetris(int X, int Y) : X(X), Y(Y), flatDir(Up), x(X / 2 + X % 2), y(Y) {}
+
+    void down() { --y; }
+
+    void right() {
+        int xright = flatDir == Right ? x : x + 1;
+        if (xright < X) ++x;
+    }
+
+    void left() {
+        int xleft = flatDir == Left ? x : x - 1;
+        if (xleft < X) --x;
+    }
+
+    void rotate() {
+        if (!stuckBoundry()) flatDir = static_cast<Direction>((flatDir + 1) % 4);
+    }
+
+    void ground() { y = flatDir == Down ? 1 : 2; }
+
+    bool onGround() { return y == 1 || (y == 2 && flatDir != Down); }
+
+    void print() {
+        char c[Y][X + 1];
+        memset(c, '0', Y * (X + 1));
+        for (int i = 0; i < Y; ++i) c[i][X] = '\n';
+
+        c[y2r()][x2c()] = '1';
+        for (int d = 0; d < DirN; ++d)
+            if (d != flatDir) c[y2r(flatsides[d].y)][x2c(flatsides[d].x)] = '1';
+
+        fwrite(c, sizeof(char), Y * (X + 1), stdout);
+    }
 };
-
-void right(Tetris &t) {
-    int xright = t.flatDir == Right ? t.x : t.x + 1;
-    if (xright < t.X) ++t.x;
-}
-void left(Tetris &t) {
-    int xleft = t.flatDir == Left ? t.x : t.x - 1;
-    if (xleft < t.X) --t.x;
-}
-
-bool stuckBoundry(const Tetris &t) { return t.x == 1 || t.x == t.X || t.y == 1; }
-
-void rotate(Tetris &t) {
-    if (!stuckBoundry(t)) t.flatDir = static_cast<Direction>((t.flatDir + 1) % 4);
-}
-void ground(Tetris &t) { t.y = t.flatDir == Down ? 1 : 2; }
-
-bool onGround(Tetris &t) { return t.y == 1 || (t.y == 2 && t.flatDir != Down); }
-
-int y2r(Tetris &t, int shift = 0) { return t.Y - (t.y + shift); }
-int x2c(Tetris &t, int shift = 0) { return t.x + shift - 1; }
-
-void print(Tetris &t) {
-    char c[t.Y][t.X + 1];
-    memset(c, '0', t.Y * (t.X + 1));
-    for (int i = 0; i < t.Y; ++i) c[i][t.X] = '\n';
-
-    c[y2r(t)][x2c(t)] = '1';
-    for (int d = 0; d < DirN; ++d)
-        if (d != t.flatDir) c[y2r(t, t.flatsides[d].y)][x2c(t, t.flatsides[d].x)] = '1';
-
-    fwrite(c, sizeof(char), t.Y * (t.X + 1), stdout);
-}
 
 int main() {
     int X, Y;
@@ -66,28 +70,28 @@ int main() {
 
     Tetris t(X, Y);
 
-    for (int i = 0; i < n && !onGround(t); ++i) {
+    for (int i = 0; i < n && !t.onGround(); ++i) {
         int op;
         cin >> op;
 
-        --t.y;
+        t.down();
 
         switch (op) {
         case MoveRight:
-            right(t);
+            t.right();
             break;
         case MoveLeft:
-            left(t);
+            t.left();
             break;
         case FallGround:
-            ground(t);
+            t.ground();
             break;
         case RotateRight:
-            rotate(t);
+            t.rotate();
             break;
         }
     }
-    print(t);
+    t.print();
 
     return 0;
 }
